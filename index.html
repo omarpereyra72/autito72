@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTITO 🚗 Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --green-dark: #1a5c2a;
+  --green-mid: #2d8c47;
+  --green-light: #4db86a;
+  --green-pale: #d4f5dc;
+  --green-subtle: #edfaf0;
+  --orange: #f57c00;
+  --orange-light: #ffb74d;
+  --orange-pale: #fff3e0;
+  --yellow: #ffd600;
+  --yellow-pale: #fffde7;
+  --red: #c62828;
+  --red-pale: #ffebee;
+  --amber: #ff8f00;
+  --text-dark: #1b2e1f;
+  --text-mid: #3a5c42;
+  --text-light: #6b8f73;
+  --bg: #f4fdf6;
+  --surface: #ffffff;
+  --border: #b2dfbc;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 12px rgba(45,140,71,0.10);
+  --shadow-lg: 0 6px 32px rgba(45,140,71,0.16);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text-dark); min-height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 60%, var(--green-light) 100%);
+  padding: 0 2rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  position: sticky; top: 0; z-index: 100;
+  min-height: 64px;
+}
+.logo-svg { flex-shrink: 0; }
+.logo-text { color: #fff; font-size: 1.7rem; font-weight: 900; letter-spacing: -0.5px; line-height: 1; }
+.logo-text span { color: var(--yellow); }
+.logo-sub { color: rgba(255,255,255,0.7); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.header-right { margin-left: auto; display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.btn-header { background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.35); color: #fff; padding: .38rem .9rem; border-radius: 20px; cursor: pointer; font-size: .82rem; font-weight: 700; font-family: inherit; transition: background .2s; white-space: nowrap; }
+.btn-header:hover { background: rgba(255,255,255,0.28); }
+.btn-header.accent { background: var(--orange); border-color: var(--orange); }
+.btn-header.accent:hover { background: #e65100; }
+
+/* ── NAV ── */
+nav {
+  background: var(--surface);
+  border-bottom: 2px solid var(--green-pale);
+  display: flex; gap: 0; overflow-x: auto;
+  position: sticky; top: 64px; z-index: 90;
+}
+nav::-webkit-scrollbar { height: 3px; } nav::-webkit-scrollbar-thumb { background: var(--green-light); }
+.nav-btn {
+  border: none; background: transparent; color: var(--text-mid);
+  padding: .85rem 1.1rem; cursor: pointer; font-family: inherit;
+  font-size: .82rem; font-weight: 700; white-space: nowrap;
+  border-bottom: 3px solid transparent; transition: all .2s;
+  display: flex; align-items: center; gap: .4rem;
+}
+.nav-btn:hover { background: var(--green-subtle); color: var(--green-dark); }
+.nav-btn.active { color: var(--green-dark); border-bottom-color: var(--orange); background: var(--green-subtle); }
+.nav-btn .ico { font-size: 1rem; }
+
+/* ── MAIN ── */
+main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.section { display: none; animation: fadeIn .25s ease; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+
+/* ── ALERTS BAR ── */
+#alerts-bar { margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: .5rem; }
+.alert-item {
+  display: flex; align-items: center; gap: .7rem; padding: .65rem 1rem;
+  border-radius: var(--radius-sm); font-size: .85rem; font-weight: 700;
+}
+.alert-item.danger { background: var(--red-pale); color: var(--red); border-left: 4px solid var(--red); }
+.alert-item.warn { background: var(--orange-pale); color: #b45000; border-left: 4px solid var(--orange); }
+.alert-item.ok { background: var(--green-pale); color: var(--green-dark); border-left: 4px solid var(--green-mid); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 1.4rem 1.5rem;
+  box-shadow: var(--shadow); margin-bottom: 1.2rem;
+}
+.card-title {
+  font-size: 1rem; font-weight: 800; color: var(--green-dark);
+  display: flex; align-items: center; gap: .5rem; margin-bottom: 1.1rem;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.card-title .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+@media(max-width:700px) { .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; } }
+
+/* ── METRICS ── */
+.metric-card {
+  background: var(--green-subtle); border: 1.5px solid var(--green-pale);
+  border-radius: var(--radius-sm); padding: .9rem 1rem; text-align: center;
+}
+.metric-card.orange { background: var(--orange-pale); border-color: #ffcc80; }
+.metric-card.yellow { background: var(--yellow-pale); border-color: #fff176; }
+.metric-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-light); margin-bottom: .3rem; }
+.metric-value { font-size: 1.6rem; font-weight: 900; color: var(--green-dark); line-height: 1; }
+.metric-card.orange .metric-value { color: #bf360c; }
+.metric-card.yellow .metric-value { color: #f57f17; }
+.metric-sub { font-size: .72rem; color: var(--text-light); margin-top: .25rem; }
+
+/* ── FORMS ── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: .8rem; }
+.form-row.tri { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.full { grid-template-columns: 1fr; }
+@media(max-width:600px) { .form-row, .form-row.tri { grid-template-columns: 1fr; } }
+.form-group { display: flex; flex-direction: column; gap: .32rem; }
+label { font-size: .78rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: .04em; }
+input, select, textarea {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: .55rem .8rem; font-size: .9rem; font-family: inherit;
+  background: #fff; color: var(--text-dark); transition: border .2s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(77,184,106,0.18); }
+textarea { resize: vertical; min-height: 70px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .6rem 1.2rem; border-radius: 20px; border: none;
+  cursor: pointer; font-family: inherit; font-size: .85rem; font-weight: 800;
+  transition: all .18s; letter-spacing: .02em;
+}
+.btn-green { background: var(--green-mid); color: #fff; }
+.btn-green:hover { background: var(--green-dark); transform: translateY(-1px); }
+.btn-orange { background: var(--orange); color: #fff; }
+.btn-orange:hover { background: #e65100; transform: translateY(-1px); }
+.btn-yellow { background: var(--yellow); color: var(--text-dark); }
+.btn-yellow:hover { background: #f9a825; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: #8e0000; }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-mid); }
+.btn-outline:hover { border-color: var(--green-mid); color: var(--green-dark); }
+.btn-sm { padding: .35rem .75rem; font-size: .78rem; }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+thead { background: var(--green-dark); color: #fff; }
+thead th { padding: .65rem .9rem; text-align: left; font-weight: 700; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--green-pale); transition: background .15s; }
+tbody tr:hover { background: var(--green-subtle); }
+tbody td { padding: .6rem .9rem; vertical-align: middle; }
+.badge {
+  display: inline-block; padding: .22rem .6rem; border-radius: 20px;
+  font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+}
+.badge-green { background: var(--green-pale); color: var(--green-dark); }
+.badge-orange { background: var(--orange-pale); color: #b45000; }
+.badge-red { background: var(--red-pale); color: var(--red); }
+.badge-yellow { background: var(--yellow-pale); color: #f57f17; }
+
+/* ── RESULT BOX ── */
+.result-box {
+  background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+  color: #fff; border-radius: var(--radius); padding: 1.4rem 1.6rem;
+  margin-top: 1rem; display: none;
+}
+.result-box.show { display: block; animation: fadeIn .3s ease; }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: .8rem; margin-top: .9rem; }
+.result-item { background: rgba(255,255,255,0.12); border-radius: var(--radius-sm); padding: .7rem .9rem; text-align: center; }
+.result-item .rl { font-size: .7rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+.result-item .rv { font-size: 1.3rem; font-weight: 900; }
+.result-item .rs { font-size: .68rem; opacity: .65; margin-top: .15rem; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500;
+  display: none; align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: var(--radius); padding: 1.8rem;
+  max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg); animation: fadeIn .2s ease;
+}
+.modal-title { font-size: 1.15rem; font-weight: 900; color: var(--green-dark); margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-light); line-height: 1; }
+
+/* ── CAR SELECTOR ── */
+.car-pill {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .35rem .85rem;
+  border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer;
+  font-size: .82rem; font-weight: 700; background: var(--surface); color: var(--text-mid);
+  transition: all .18s; margin: .2rem;
+}
+.car-pill.selected { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+.car-pill:hover:not(.selected) { border-color: var(--green-mid); color: var(--green-dark); }
+
+/* ── LINK CARD ── */
+.link-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: .9rem 1rem; display: flex; align-items: center; gap: .8rem;
+  transition: box-shadow .18s, transform .18s;
+}
+.link-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.link-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--green-pale); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.link-card a { color: var(--green-dark); font-weight: 700; font-size: .9rem; text-decoration: none; }
+.link-card a:hover { text-decoration: underline; }
+.link-cat { font-size: .7rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .05em; }
+
+/* ── SECTION HEADER ── */
+.sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; flex-wrap: wrap; gap: .5rem; }
+.sec-title { font-size: 1.25rem; font-weight: 900; color: var(--green-dark); }
+.sec-sub { font-size: .82rem; color: var(--text-light); margin-top: .1rem; }
+
+/* ── TABS (within section) ── */
+.sub-tabs { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.sub-tab { padding: .42rem .95rem; border-radius: 20px; border: 1.5px solid var(--border); background: transparent; cursor: pointer; font-family: inherit; font-size: .8rem; font-weight: 700; color: var(--text-mid); transition: all .18s; }
+.sub-tab.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 1.6rem; }
+.timeline::before { content:''; position:absolute; left:.55rem; top:0; bottom:0; width:2px; background: var(--green-pale); }
+.tl-item { position: relative; margin-bottom: 1.1rem; }
+.tl-dot { position: absolute; left: -1.6rem; top: .3rem; width: 12px; height: 12px; border-radius: 50%; background: var(--orange); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--orange); }
+.tl-content { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: .75rem 1rem; }
+.tl-date { font-size: .72rem; color: var(--text-light); font-weight: 700; text-transform: uppercase; }
+.tl-title { font-size: .9rem; font-weight: 800; color: var(--green-dark); margin: .15rem 0; }
+.tl-detail { font-size: .8rem; color: var(--text-mid); }
+.tl-cost { font-size: .82rem; font-weight: 800; color: var(--orange); margin-top: .2rem; }
+
+/* ── PROGRESS / KM BAR ── */
+.km-bar-wrap { margin: .6rem 0; }
+.km-bar-label { display: flex; justify-content: space-between; font-size: .75rem; font-weight: 700; color: var(--text-mid); margin-bottom: .25rem; }
+.km-bar { height: 10px; background: var(--green-pale); border-radius: 10px; overflow: hidden; }
+.km-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid), var(--orange-light)); border-radius: 10px; transition: width .6s ease; }
+
+/* ── PRINT ── */
+@media print { nav, header .header-right, .btn, .modal-overlay { display: none !important; } main { padding: 0; } }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <svg class="logo-svg" width="54" height="36" viewBox="0 0 54 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- body -->
+    <rect x="4" y="14" width="46" height="16" rx="5" fill="#fff"/>
+    <!-- cabin -->
+    <path d="M14 14 Q16 4 26 4 Q36 4 40 14Z" fill="#ffe082"/>
+    <!-- windows -->
+    <path d="M17 13 Q18.5 7 26 7 Q33 7 35 13Z" fill="#b2ebf2" opacity=".8"/>
+    <!-- wheels -->
+    <circle cx="14" cy="30" r="6" fill="#1a5c2a"/>
+    <circle cx="14" cy="30" r="3" fill="#fff"/>
+    <circle cx="40" cy="30" r="6" fill="#1a5c2a"/>
+    <circle cx="40" cy="30" r="3" fill="#fff"/>
+    <!-- headlight -->
+    <rect x="46" y="18" width="5" height="4" rx="2" fill="#ffd600"/>
+    <!-- taillight -->
+    <rect x="3" y="18" width="4" height="4" rx="2" fill="#f44336"/>
+    <!-- smile -->
+    <path d="M20 24 Q27 29 34 24" stroke="#f57c00" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- eyes -->
+    <circle cx="23" cy="21" r="1.5" fill="#f57c00"/>
+    <circle cx="31" cy="21" r="1.5" fill="#f57c00"/>
+  </svg>
+  <div>
+    <div class="logo-text">AUTITO <span>🚗</span></div>
+    <div class="logo-sub">Tu dashboard de auto personal</div>
+  </div>
+  <div class="header-right">
+    <span id="clock-display" style="color:#fff;font-weight:800;font-size:.88rem;"></span>
+    <button class="btn-header" onclick="exportData()">⬇ Exportar</button>
+    <label class="btn-header" style="cursor:pointer;">⬆ Importar<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    <button class="btn-header accent" onclick="printPDF()">🖨 PDF</button>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-btn active" onclick="showSection('inicio')" data-sec="inicio"><span class="ico">🏠</span>Inicio</button>
+  <button class="nav-btn" onclick="showSection('autos')" data-sec="autos"><span class="ico">🚗</span>Mis Autos</button>
+  <button class="nav-btn" onclick="showSection('nafta')" data-sec="nafta"><span class="ico">⛽</span>Nafta</button>
+  <button class="nav-btn" onclick="showSection('mantenimiento')" data-sec="mantenimiento"><span class="ico">🔧</span>Mantenimiento</button>
+  <button class="nav-btn" onclick="showSection('historial')" data-sec="historial"><span class="ico">📋</span>Historial</button>
+  <button class="nav-btn" onclick="showSection('gastos')" data-sec="gastos"><span class="ico">💰</span>Gastos</button>
+  <button class="nav-btn" onclick="showSection('documentos')" data-sec="documentos"><span class="ico">📄</span>Documentos</button>
+  <button class="nav-btn" onclick="showSection('links')" data-sec="links"><span class="ico">🔗</span>Links</button>
+</nav>
+
+<main>
+<!-- ALERTS -->
+<div id="alerts-bar"></div>
+
+<!-- ══════════ INICIO ══════════ -->
+<div id="sec-inicio" class="section active">
+  <div class="sec-header">
+    <div><div class="sec-title">Panel Principal</div><div class="sec-sub">Resumen general de tu(s) vehículo(s)</div></div>
+  </div>
+
+  <div id="inicio-car-select" style="margin-bottom:1rem;"></div>
+
+  <div class="grid-4" id="inicio-metrics">
+    <div class="metric-card"><div class="metric-label">Km Totales</div><div class="metric-value" id="m-km">—</div><div class="metric-sub">Odómetro actual</div></div>
+    <div class="metric-card orange"><div class="metric-label">Costo por Km</div><div class="metric-value" id="m-cpkm">—</div><div class="metric-sub">Último tanque</div></div>
+    <div class="metric-card yellow"><div class="metric-label">Rendimiento</div><div class="metric-value" id="m-rend">—</div><div class="metric-sub">km/litro</div></div>
+    <div class="metric-card"><div class="metric-label">Gasto Total</div><div class="metric-value" id="m-gtotal">—</div><div class="metric-sub">Acumulado</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1rem;">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Próximos vencimientos</div>
+      <div id="inicio-venc" style="font-size:.88rem; color:var(--text-mid);">Sin datos cargados.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Últimos mantenimientos</div>
+      <div id="inicio-mantenimientos" style="font-size:.88rem; color:var(--text-mid);">Sin registros.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ AUTOS ══════════ -->
+<div id="sec-autos" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Mis Autos</div><div class="sec-sub">Cargá los datos de cada vehículo</div></div>
+    <button class="btn btn-green" onclick="openModal('modal-auto')">+ Nuevo Auto</button>
+  </div>
+  <div id="autos-list" class="grid-2"></div>
+</div>
+
+<!-- ══════════ NAFTA ══════════ -->
+<div id="sec-nafta" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Calculadora de Nafta</div><div class="sec-sub">Registrá cargas y calculá consumo exacto</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Nueva Carga</div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha</label><input type="date" id="n-fecha"></div>
+        <div class="form-group"><label>Hora</label><input type="time" id="n-hora"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Km odómetro</label><input type="number" id="n-km" placeholder="214649"></div>
+        <div class="form-group"><label>Litros cargados</label><input type="number" id="n-litros" step="0.0001" placeholder="42.4097"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Precio $/litro</label><input type="number" id="n-precio" placeholder="2177"></div>
+        <div class="form-group"><label>Tipo de nafta</label>
+          <select id="n-tipo">
+            <option>Super</option><option>Premium</option><option>Diesel</option><option>Infinia</option><option>Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Km anterior (tanque lleno)</label><input type="number" id="n-km-ant" placeholder="214070"></div>
+        <div class="form-group"><label>Auto</label><select id="n-auto-sel"></select></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Observaciones</label><input type="text" id="n-obs" placeholder="Ej: ruta 9, clima frío..."></div>
+      </div>
+      <button class="btn btn-green" onclick="calcNafta()" style="margin-top:.3rem;">⛽ Calcular y Guardar</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Resultado</div>
+      <div id="nafta-result" class="result-box" style="display:none;">
+        <div style="font-weight:800;font-size:1rem;margin-bottom:.3rem;">✅ Carga registrada</div>
+        <div class="result-grid" id="nafta-result-grid"></div>
+      </div>
+      <div style="font-size:.82rem;color:var(--text-light);margin-top:.8rem;">
+        <strong>💡 Cómo medir bien:</strong> Llenás el tanque → anotás los km → manejás → llenás de nuevo → anotás los km y los litros cargados. El sistema calcula automáticamente.
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-title"><span class="dot"></span>Historial de Cargas</div>
+    <div class="table-wrap">
+      <table id="nafta-tabla">
+        <thead><tr><th>Fecha / Hora</th><th>Auto</th><th>Tipo</th><th>Km</th><th>Litros</th><th>$/L</th><th>Total $</th><th>km/L</th><th>$/km</th><th>Obs</th><th></th></tr></thead>
+        <tbody id="nafta-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MANTENIMIENTO ══════════ -->
+<div id="sec-mantenimiento" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Mantenimiento</div><div class="sec-sub">Registrá todos los trabajos del vehículo</div></div>
+    <button class="btn btn-green" onclick="openModal('modal-mant')">+ Nuevo Registro</button>
+  </div>
+
+  <div class="sub-tabs" id="mant-filter">
+    <button class="sub-tab active" onclick="filterMant('todos',this)">Todos</button>
+    <button class="sub-tab" onclick="filterMant('Cambio de aceite',this)">🛢 Aceite</button>
+    <button class="sub-tab" onclick="filterMant('Filtros',this)">🔘 Filtros</button>
+    <button class="sub-tab" onclick="filterMant('Batería',this)">🔋 Batería</button>
+    <button class="sub-tab" onclick="filterMant('Cubiertas',this)">⚫ Cubiertas</button>
+    <button class="sub-tab" onclick="filterMant('Frenos',this)">🔴 Frenos</button>
+    <button class="sub-tab" onclick="filterMant('Lavado',this)">🚿 Lavado</button>
+    <button class="sub-tab" onclick="filterMant('Electricidad',this)">⚡ Electricidad</button>
+    <button class="sub-tab" onclick="filterMant('Suspensión',this)">🔩 Suspensión</button>
+    <button class="sub-tab" onclick="filterMant('Otro',this)">📦 Otro</button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table id="mant-tabla">
+        <thead><tr><th>Fecha</th><th>Auto</th><th>Categoría</th><th>Trabajo</th><th>Km</th><th>Próx. Km</th><th>Taller / Servicio</th><th>Costo $</th><th>Notas</th><th></th></tr></thead>
+        <tbody id="mant-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HISTORIAL ══════════ -->
+<div id="sec-historial" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Historial Completo</div><div class="sec-sub">Línea de tiempo de todos los eventos</div></div>
+    <select id="hist-auto-filter" onchange="renderHistorial()" style="padding:.45rem .8rem;border-radius:20px;border:1.5px solid var(--border);font-family:inherit;font-size:.82rem;"><option value="todos">Todos los autos</option></select>
+  </div>
+  <div class="timeline" id="historial-tl"></div>
+</div>
+
+<!-- ══════════ GASTOS ══════════ -->
+<div id="sec-gastos" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Gastos & Impuestos</div><div class="sec-sub">Patentes, seguros, multas, lavados y más</div></div>
+    <button class="btn btn-green" onclick="openModal('modal-gasto')">+ Nuevo Gasto</button>
+  </div>
+  <div class="grid-3" id="gastos-metrics" style="margin-bottom:1rem;"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table id="gastos-tabla">
+        <thead><tr><th>Fecha</th><th>Auto</th><th>Categoría</th><th>Descripción</th><th>Monto $</th><th>Vto / Nota</th><th></th></tr></thead>
+        <tbody id="gastos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DOCUMENTOS ══════════ -->
+<div id="sec-documentos" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Documentos & Alertas</div><div class="sec-sub">VTV, seguro, carnet, habilitaciones</div></div>
+    <button class="btn btn-green" onclick="openModal('modal-doc')">+ Nuevo Documento</button>
+  </div>
+  <div class="grid-2" id="docs-cards"></div>
+</div>
+
+<!-- ══════════ LINKS ══════════ -->
+<div id="sec-links" class="section">
+  <div class="sec-header">
+    <div><div class="sec-title">Links Útiles</div><div class="sec-sub">Sitios de mecánica, tutoriales, trámites</div></div>
+    <button class="btn btn-green" onclick="openModal('modal-link')">+ Agregar Link</button>
+  </div>
+  <div class="grid-2" id="links-predef" style="margin-bottom:1rem;"></div>
+  <div class="card" style="margin-bottom:1rem;">
+    <div class="card-title"><span class="dot"></span>Mis Links Guardados</div>
+    <div class="grid-2" id="links-custom"></div>
+    <div id="links-empty" style="font-size:.85rem;color:var(--text-light);display:none;">Todavía no agregaste links. Usá el botón + para agregar.</div>
+  </div>
+</div>
+</main>
+
+<!-- ══════════ MODALES ══════════ -->
+
+<!-- Modal Auto -->
+<div class="modal-overlay" id="modal-auto">
+<div class="modal">
+  <div class="modal-title">🚗 Datos del Vehículo <button class="modal-close" onclick="closeModal('modal-auto')">✕</button></div>
+  <input type="hidden" id="auto-edit-id">
+  <div class="form-row"><div class="form-group"><label>Apodo / Nombre</label><input id="a-nombre" placeholder="Ej: El Clio"></div><div class="form-group"><label>Patente</label><input id="a-patente" placeholder="AB 123 CD"></div></div>
+  <div class="form-row"><div class="form-group"><label>Marca</label><input id="a-marca" placeholder="Renault"></div><div class="form-group"><label>Modelo</label><input id="a-modelo" placeholder="Clio"></div></div>
+  <div class="form-row tri"><div class="form-group"><label>Año</label><input id="a-anio" type="number" placeholder="2018"></div><div class="form-group"><label>Color</label><input id="a-color" placeholder="Blanco"></div><div class="form-group"><label>Combustible</label><select id="a-comb"><option>Nafta Super</option><option>Nafta Premium</option><option>Diesel</option><option>GNC</option><option>Eléctrico</option><option>Híbrido</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Km odómetro actual</label><input id="a-km" type="number" placeholder="214649"></div><div class="form-group"><label>Capacidad tanque (L)</label><input id="a-tanque" type="number" placeholder="50"></div></div>
+  <div class="form-row"><div class="form-group"><label>Motor / cc</label><input id="a-motor" placeholder="1.6 16v"></div><div class="form-group"><label>Transmisión</label><select id="a-trans"><option>Manual</option><option>Automática</option><option>CVT</option></select></div></div>
+  <div class="form-row full"><div class="form-group"><label>VIN / Nro de chasis</label><input id="a-vin" placeholder="9BWZZZ377VT004251"></div></div>
+  <div class="form-row full"><div class="form-group"><label>Notas</label><textarea id="a-notas" placeholder="Cualquier dato extra..."></textarea></div></div>
+  <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+    <button class="btn btn-green" onclick="saveAuto()">💾 Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-auto')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal Mantenimiento -->
+<div class="modal-overlay" id="modal-mant">
+<div class="modal">
+  <div class="modal-title">🔧 Registro de Mantenimiento <button class="modal-close" onclick="closeModal('modal-mant')">✕</button></div>
+  <input type="hidden" id="mant-edit-id">
+  <div class="form-row"><div class="form-group"><label>Auto</label><select id="m-auto"></select></div><div class="form-group"><label>Fecha</label><input type="date" id="m-fecha"></div></div>
+  <div class="form-row"><div class="form-group"><label>Categoría</label>
+    <select id="m-cat" onchange="updateMantSubcat()">
+      <option>Cambio de aceite</option><option>Filtros</option><option>Batería</option><option>Cubiertas</option><option>Frenos</option><option>Suspensión</option><option>Encendido</option><option>Correa de distribución</option><option>Embrague</option><option>Refrigeración</option><option>Electricidad</option><option>Lavado</option><option>Carrocería / Pintura</option><option>Vidrios</option><option>Aire acondicionado</option><option>Revisión técnica (VTV/RTO)</option><option>Alineación y balanceo</option><option>Tapizado</option><option>Otro</option>
+    </select>
+  </div><div class="form-group"><label>Descripción del trabajo</label><input id="m-desc" placeholder="Ej: cambio aceite 10W40 + filtro"></div></div>
+  <div class="form-row tri">
+    <div class="form-group"><label>Km al momento</label><input type="number" id="m-km" placeholder="214070"></div>
+    <div class="form-group"><label>Próx. service (Km)</label><input type="number" id="m-prox-km" placeholder="224070"></div>
+    <div class="form-group"><label>Próx. service (fecha)</label><input type="date" id="m-prox-fecha"></div>
+  </div>
+  <div class="form-row"><div class="form-group"><label>Taller / Mecánico</label><input id="m-taller" placeholder="Taller El Rápido"></div><div class="form-group"><label>Costo total $</label><input type="number" id="m-costo" placeholder="15000"></div></div>
+  <div class="form-row"><div class="form-group"><label>Repuesto / Marca usada</label><input id="m-repuesto" placeholder="Ej: Aceite Castrol GTX 10W40"></div><div class="form-group"><label>Garantía hasta</label><input type="date" id="m-garantia"></div></div>
+  <div class="form-row full"><div class="form-group"><label>Notas / Observaciones</label><textarea id="m-notas" placeholder="Cualquier detalle..."></textarea></div></div>
+  <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+    <button class="btn btn-green" onclick="saveMant()">💾 Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-mant')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal Gasto -->
+<div class="modal-overlay" id="modal-gasto">
+<div class="modal">
+  <div class="modal-title">💰 Nuevo Gasto <button class="modal-close" onclick="closeModal('modal-gasto')">✕</button></div>
+  <input type="hidden" id="gasto-edit-id">
+  <div class="form-row"><div class="form-group"><label>Auto</label><select id="g-auto"></select></div><div class="form-group"><label>Fecha</label><input type="date" id="g-fecha"></div></div>
+  <div class="form-row"><div class="form-group"><label>Categoría</label>
+    <select id="g-cat">
+      <option>Patente</option><option>Seguro</option><option>VTV / RTO</option><option>Multa</option>
+      <option>Peaje</option><option>Lavado</option><option>Parking</option><option>Combustible extra</option>
+      <option>Repuestos</option><option>Impuesto municipal</option><option>Renta / Alquiler garaje</option><option>Otro</option>
+    </select>
+  </div><div class="form-group"><label>Monto $</label><input type="number" id="g-monto" placeholder="25000"></div></div>
+  <div class="form-row"><div class="form-group"><label>Descripción</label><input id="g-desc" placeholder="Ej: 1ra cuota patente 2026"></div><div class="form-group"><label>Fecha de vencimiento</label><input type="date" id="g-vto"></div></div>
+  <div class="form-row full"><div class="form-group"><label>Notas</label><textarea id="g-notas" placeholder="..."></textarea></div></div>
+  <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+    <button class="btn btn-green" onclick="saveGasto()">💾 Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-gasto')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal Documento -->
+<div class="modal-overlay" id="modal-doc">
+<div class="modal">
+  <div class="modal-title">📄 Documento / Vencimiento <button class="modal-close" onclick="closeModal('modal-doc')">✕</button></div>
+  <input type="hidden" id="doc-edit-id">
+  <div class="form-row"><div class="form-group"><label>Auto</label><select id="d-auto"></select></div><div class="form-group"><label>Tipo de documento</label>
+    <select id="d-tipo">
+      <option>Cédula verde</option><option>Cédula azul</option><option>Seguro obligatorio</option>
+      <option>Seguro total</option><option>VTV / RTO</option><option>Patente</option>
+      <option>Carnet de conducir</option><option>Habilitación especial</option><option>Otro</option>
+    </select>
+  </div></div>
+  <div class="form-row"><div class="form-group"><label>Nro de póliza / Documento</label><input id="d-nro" placeholder="Nro de referencia"></div><div class="form-group"><label>Compañía / Entidad</label><input id="d-entidad" placeholder="Ej: Sancor Seguros"></div></div>
+  <div class="form-row"><div class="form-group"><label>Fecha de emisión</label><input type="date" id="d-emision"></div><div class="form-group"><label>Fecha de vencimiento</label><input type="date" id="d-vto"></div></div>
+  <div class="form-row"><div class="form-group"><label>Costo $</label><input type="number" id="d-costo" placeholder="0"></div><div class="form-group"><label>Alerta (días antes)</label><input type="number" id="d-alerta" value="30" placeholder="30"></div></div>
+  <div class="form-row full"><div class="form-group"><label>Notas</label><textarea id="d-notas"></textarea></div></div>
+  <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+    <button class="btn btn-green" onclick="saveDoc()">💾 Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-doc')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<!-- Modal Link -->
+<div class="modal-overlay" id="modal-link">
+<div class="modal">
+  <div class="modal-title">🔗 Agregar Link <button class="modal-close" onclick="closeModal('modal-link')">✕</button></div>
+  <input type="hidden" id="link-edit-id">
+  <div class="form-row full"><div class="form-group"><label>Título</label><input id="l-titulo" placeholder="Ej: Canal mecánica YouTube"></div></div>
+  <div class="form-row full"><div class="form-group"><label>URL</label><input id="l-url" placeholder="https://..."></div></div>
+  <div class="form-row"><div class="form-group"><label>Categoría</label>
+    <select id="l-cat">
+      <option>Mecánica general</option><option>Tutoriales / Videos</option><option>Repuestos</option>
+      <option>Trámites / Estado</option><option>Seguros</option><option>Combustible / Precios</option><option>Otro</option>
+    </select>
+  </div><div class="form-group"><label>Emoji / Ícono</label><input id="l-ico" placeholder="🔧" maxlength="4"></div></div>
+  <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+    <button class="btn btn-green" onclick="saveLink()">💾 Guardar</button>
+    <button class="btn btn-outline" onclick="closeModal('modal-link')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA STORE
+// ═══════════════════════════════════════
+let DB = {
+  autos: [],
+  nafta: [],
+  mantenimiento: [],
+  gastos: [],
+  documentos: [],
+  links: []
+};
+
+function loadDB() {
+  const saved = localStorage.getItem('autito_db');
+  if (saved) DB = JSON.parse(saved);
+}
+function saveDB() {
+  localStorage.setItem('autito_db', JSON.stringify(DB));
+}
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ═══════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours(), m = now.getMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  const h12 = h % 12 || 12;
+  const mStr = m.toString().padStart(2,'0');
+  document.getElementById('clock-display').textContent = `${h12}:${mStr} hs (${ampm})`;
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ═══════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  document.querySelector(`.nav-btn[data-sec="${id}"]`).classList.add('active');
+  if(id==='historial') renderHistorial();
+  if(id==='gastos') renderGastos();
+  if(id==='inicio') renderInicio();
+  if(id==='documentos') renderDocs();
+  if(id==='links') renderLinks();
+  if(id==='nafta') renderNaftaTabla();
+  if(id==='mantenimiento') renderMantTabla();
+  if(id==='autos') renderAutos();
+}
+
+// ═══════════════════════════════════════
+//  MODALES
+// ═══════════════════════════════════════
+function openModal(id) {
+  populateAutoSelects();
+  document.getElementById(id).classList.add('open');
+  // set today date defaults
+  const today = new Date().toISOString().split('T')[0];
+  const timeEl = document.getElementById('n-hora');
+  if(timeEl && !timeEl.value) { const now = new Date(); timeEl.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; }
+  ['m-fecha','g-fecha','n-fecha'].forEach(fid => { const el = document.getElementById(fid); if(el && !el.value) el.value = today; });
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); }));
+
+// ═══════════════════════════════════════
+//  AUTO SELECTS POPULATE
+// ═══════════════════════════════════════
+function populateAutoSelects() {
+  ['n-auto-sel','m-auto','g-auto','d-auto'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if(!el) return;
+    el.innerHTML = DB.autos.length ? DB.autos.map(a => `<option value="${a.id}">${a.nombre} (${a.patente})</option>`).join('') : '<option value="">— Sin autos —</option>';
+  });
+  // hist filter
+  const hf = document.getElementById('hist-auto-filter');
+  if(hf) {
+    const cur = hf.value;
+    hf.innerHTML = '<option value="todos">Todos los autos</option>' + DB.autos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+    hf.value = cur;
+  }
+}
+
+// ═══════════════════════════════════════
+//  AUTOS
+// ═══════════════════════════════════════
+function saveAuto() {
+  const id = document.getElementById('auto-edit-id').value || genId();
+  const auto = {
+    id, nombre: v('a-nombre'), patente: v('a-patente').toUpperCase(),
+    marca: v('a-marca'), modelo: v('a-modelo'), anio: v('a-anio'),
+    color: v('a-color'), combustible: v('a-comb'), km: parseFloat(v('a-km')) || 0,
+    tanque: parseFloat(v('a-tanque')) || 50, motor: v('a-motor'),
+    transmision: v('a-trans'), vin: v('a-vin'), notas: v('a-notas'),
+    creado: new Date().toISOString()
+  };
+  const idx = DB.autos.findIndex(a => a.id === id);
+  if(idx >= 0) DB.autos[idx] = auto; else DB.autos.push(auto);
+  saveDB(); closeModal('modal-auto'); renderAutos(); renderAlerts();
+  clearForm(['a-nombre','a-patente','a-marca','a-modelo','a-anio','a-color','a-km','a-tanque','a-motor','a-vin','a-notas']);
+  document.getElementById('auto-edit-id').value = '';
+}
+function renderAutos() {
+  const cont = document.getElementById('autos-list');
+  if(!DB.autos.length) { cont.innerHTML = '<div style="color:var(--text-light);font-size:.9rem;grid-column:1/-1;">Todavía no cargaste ningún auto. Hacé clic en <strong>+ Nuevo Auto</strong>.</div>'; return; }
+  cont.innerHTML = DB.autos.map(a => `
+    <div class="card" style="position:relative;">
+      <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.8rem;">
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🚗</div>
+        <div>
+          <div style="font-weight:900;font-size:1.1rem;color:var(--green-dark);">${a.nombre}</div>
+          <div style="font-size:.78rem;color:var(--text-light);">${a.marca} ${a.modelo} ${a.anio}</div>
+        </div>
+        <span class="badge badge-green" style="margin-left:auto;">${a.patente}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.82rem;margin-bottom:.8rem;">
+        <div><span style="color:var(--text-light);">Color:</span> ${a.color}</div>
+        <div><span style="color:var(--text-light);">Motor:</span> ${a.motor}</div>
+        <div><span style="color:var(--text-light);">Combustible:</span> ${a.combustible}</div>
+        <div><span style="color:var(--text-light);">Caja:</span> ${a.transmision}</div>
+        <div><span style="color:var(--text-light);">Km actual:</span> <strong>${fmtNum(a.km)}</strong></div>
+        <div><span style="color:var(--text-light);">Tanque:</span> ${a.tanque} L</div>
+        ${a.vin ? `<div style="grid-column:1/-1;"><span style="color:var(--text-light);">VIN:</span> <code style="font-size:.75rem;">${a.vin}</code></div>` : ''}
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="editAuto('${a.id}')">✏ Editar</button>
+        <button class="btn btn-red btn-sm" onclick="deleteAuto('${a.id}')">🗑 Eliminar</button>
+      </div>
+    </div>`).join('');
+  renderInicioPills();
+  populateAutoSelects();
+}
+function editAuto(id) {
+  const a = DB.autos.find(x => x.id === id);
+  if(!a) return;
+  document.getElementById('auto-edit-id').value = id;
+  setv('a-nombre',a.nombre); setv('a-patente',a.patente); setv('a-marca',a.marca);
+  setv('a-modelo',a.modelo); setv('a-anio',a.anio); setv('a-color',a.color);
+  setv('a-km',a.km); setv('a-tanque',a.tanque); setv('a-motor',a.motor);
+  setv('a-vin',a.vin); setv('a-notas',a.notas);
+  document.getElementById('a-comb').value = a.combustible;
+  document.getElementById('a-trans').value = a.transmision;
+  openModal('modal-auto');
+}
+function deleteAuto(id) {
+  if(!confirm('¿Eliminar este auto y todos sus datos?')) return;
+  DB.autos = DB.autos.filter(a => a.id !== id);
+  saveDB(); renderAutos(); renderAlerts();
+}
+
+// ═══════════════════════════════════════
+//  NAFTA
+// ═══════════════════════════════════════
+function calcNafta() {
+  const kmAct = parseFloat(v('n-km')) || 0;
+  const kmAnt = parseFloat(v('n-km-ant')) || 0;
+  const litros = parseFloat(v('n-litros')) || 0;
+  const precio = parseFloat(v('n-precio')) || 0;
+  const fecha = v('n-fecha');
+  const hora = v('n-hora');
+  const tipo = v('n-tipo');
+  const obs = v('n-obs');
+  const autoId = v('n-auto-sel');
+
+  if(!kmAct || !litros || !precio) { alert('Completá al menos: Km actual, Litros y Precio/L'); return; }
+
+  const kmRecorridos = kmAnt ? kmAct - kmAnt : 0;
+  const kmPerL = kmRecorridos > 0 ? kmRecorridos / litros : 0;
+  const lPerKm = kmRecorridos > 0 ? litros / kmRecorridos : 0;
+  const total = litros * precio;
+  const costoKm = kmRecorridos > 0 ? total / kmRecorridos : 0;
+
+  const id = genId();
+  let horaFmt = '';
+  if(hora) {
+    const [hh, mm] = hora.split(':');
+    const hNum = parseInt(hh);
+    const ampm = hNum >= 12 ? 'pm' : 'am';
+    const h12 = hNum % 12 || 12;
+    horaFmt = `${h12}:${mm} hs (${ampm})`;
+  }
+
+  const registro = { id, fecha, hora: horaFmt, tipo, litros, precio, total, kmAct, kmAnt, kmRecorridos, kmPerL, lPerKm, costoKm, obs, autoId, ts: Date.now() };
+  DB.nafta.push(registro);
+
+  // update auto km
+  const auto = DB.autos.find(a => a.id === autoId);
+  if(auto && kmAct > auto.km) { auto.km = kmAct; saveDB(); }
+
+  saveDB();
+  renderNaftaTabla();
+  renderAlerts();
+
+  const rg = document.getElementById('nafta-result-grid');
+  rg.innerHTML = [
+    ['Km recorridos', kmRecorridos > 0 ? fmtNum(kmRecorridos) + ' km' : '—', 'Tramo cargado'],
+    ['Rendimiento', kmPerL > 0 ? kmPerL.toFixed(2) + ' km/L' : '—', 'km por litro'],
+    ['Consumo', lPerKm > 0 ? lPerKm.toFixed(4) + ' L/km' : '—', 'litros por km'],
+    ['Total gastado', '$' + fmtNum(Math.round(total)), litros.toFixed(4) + 'L × $' + precio + '/L'],
+    ['Costo por km', costoKm > 0 ? '$' + costoKm.toFixed(2) : '—', 'por cada kilómetro'],
+  ].map(([l,v,s]) => `<div class="result-item"><div class="rl">${l}</div><div class="rv">${v}</div><div class="rs">${s}</div></div>`).join('');
+
+  const rb = document.getElementById('nafta-result');
+  rb.style.display = 'block';
+  clearForm(['n-litros','n-km-ant','n-obs']);
+}
+
+function renderNaftaTabla() {
+  const tbody = document.getElementById('nafta-tbody');
+  const sorted = [...DB.nafta].sort((a,b) => b.ts - a.ts);
+  tbody.innerHTML = sorted.map(r => {
+    const auto = DB.autos.find(a => a.id === r.autoId);
+    return `<tr>
+      <td>${r.fecha} ${r.hora ? '<br><small style="color:var(--text-light);">'+r.hora+'</small>' : ''}</td>
+      <td>${auto ? auto.nombre : '—'}</td>
+      <td><span class="badge badge-green">${r.tipo}</span></td>
+      <td>${fmtNum(r.kmAct)}</td>
+      <td>${r.litros.toFixed(4)}</td>
+      <td>$${fmtNum(r.precio)}</td>
+      <td>$${fmtNum(Math.round(r.total))}</td>
+      <td>${r.kmPerL > 0 ? r.kmPerL.toFixed(2) : '—'}</td>
+      <td>${r.costoKm > 0 ? '$'+r.costoKm.toFixed(2) : '—'}</td>
+      <td style="max-width:120px;font-size:.78rem;">${r.obs||''}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteNafta('${r.id}')">🗑</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--text-light);padding:1.5rem;">Sin cargas registradas</td></tr>';
+}
+function deleteNafta(id) { if(!confirm('¿Eliminar este registro?')) return; DB.nafta = DB.nafta.filter(r => r.id !== id); saveDB(); renderNaftaTabla(); }
+
+// ═══════════════════════════════════════
+//  MANTENIMIENTO
+// ═══════════════════════════════════════
+function saveMant() {
+  const id = document.getElementById('mant-edit-id').value || genId();
+  const reg = {
+    id, autoId: v('m-auto'), fecha: v('m-fecha'),
+    cat: v('m-cat'), desc: v('m-desc'), km: parseFloat(v('m-km')) || 0,
+    proxKm: parseFloat(v('m-prox-km')) || 0, proxFecha: v('m-prox-fecha'),
+    taller: v('m-taller'), costo: parseFloat(v('m-costo')) || 0,
+    repuesto: v('m-repuesto'), garantia: v('m-garantia'),
+    notas: v('m-notas'), ts: Date.now()
+  };
+  const idx = DB.mantenimiento.findIndex(x => x.id === id);
+  if(idx >= 0) DB.mantenimiento[idx] = reg; else DB.mantenimiento.push(reg);
+  saveDB(); closeModal('modal-mant'); renderMantTabla(); renderAlerts();
+  document.getElementById('mant-edit-id').value = '';
+}
+function renderMantTabla(filter = null) {
+  const tbody = document.getElementById('mant-tbody');
+  let data = [...DB.mantenimiento].sort((a,b) => b.ts - a.ts);
+  if(filter && filter !== 'todos') data = data.filter(r => r.cat === filter);
+  tbody.innerHTML = data.map(r => {
+    const auto = DB.autos.find(a => a.id === r.autoId);
+    return `<tr>
+      <td>${r.fecha}</td>
+      <td>${auto ? auto.nombre : '—'}</td>
+      <td><span class="badge badge-orange">${r.cat}</span></td>
+      <td>${r.desc}</td>
+      <td>${fmtNum(r.km)}</td>
+      <td>${r.proxKm ? fmtNum(r.proxKm) : '—'}</td>
+      <td>${r.taller||'—'}</td>
+      <td style="font-weight:800;color:var(--orange);">${r.costo ? '$'+fmtNum(r.costo) : '—'}</td>
+      <td style="font-size:.78rem;">${r.notas||''}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-outline btn-sm" onclick="editMant('${r.id}')">✏</button>
+        <button class="btn btn-red btn-sm" onclick="deleteMant('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:1.5rem;">Sin registros</td></tr>';
+}
+function filterMant(cat, btn) {
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMantTabla(cat === 'todos' ? null : cat);
+}
+function editMant(id) {
+  const r = DB.mantenimiento.find(x => x.id === id);
+  if(!r) return;
+  document.getElementById('mant-edit-id').value = id;
+  populateAutoSelects();
+  setv('m-auto', r.autoId); setv('m-fecha', r.fecha);
+  document.getElementById('m-cat').value = r.cat;
+  setv('m-desc', r.desc); setv('m-km', r.km); setv('m-prox-km', r.proxKm);
+  setv('m-prox-fecha', r.proxFecha); setv('m-taller', r.taller);
+  setv('m-costo', r.costo); setv('m-repuesto', r.repuesto);
+  setv('m-garantia', r.garantia); setv('m-notas', r.notas);
+  openModal('modal-mant');
+}
+function deleteMant(id) { if(!confirm('¿Eliminar este registro?')) return; DB.mantenimiento = DB.mantenimiento.filter(r => r.id !== id); saveDB(); renderMantTabla(); }
+
+// ═══════════════════════════════════════
+//  GASTOS
+// ═══════════════════════════════════════
+function saveGasto() {
+  const id = document.getElementById('gasto-edit-id').value || genId();
+  const reg = {
+    id, autoId: v('g-auto'), fecha: v('g-fecha'),
+    cat: v('g-cat'), desc: v('g-desc'), monto: parseFloat(v('g-monto')) || 0,
+    vto: v('g-vto'), notas: v('g-notas'), ts: Date.now()
+  };
+  const idx = DB.gastos.findIndex(x => x.id === id);
+  if(idx >= 0) DB.gastos[idx] = reg; else DB.gastos.push(reg);
+  saveDB(); closeModal('modal-gasto'); renderGastos(); renderAlerts();
+  document.getElementById('gasto-edit-id').value = '';
+}
+function renderGastos() {
+  const tbody = document.getElementById('gastos-tbody');
+  const sorted = [...DB.gastos].sort((a,b) => b.ts - a.ts);
+  tbody.innerHTML = sorted.map(r => {
+    const auto = DB.autos.find(a => a.id === r.autoId);
+    return `<tr>
+      <td>${r.fecha}</td>
+      <td>${auto ? auto.nombre : '—'}</td>
+      <td><span class="badge badge-yellow">${r.cat}</span></td>
+      <td>${r.desc}</td>
+      <td style="font-weight:800;color:var(--orange);">$${fmtNum(r.monto)}</td>
+      <td>${r.vto || '—'}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-red btn-sm" onclick="deleteGasto('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-light);padding:1.5rem;">Sin gastos registrados</td></tr>';
+
+  // metrics
+  const total = DB.gastos.reduce((s,r) => s + r.monto, 0);
+  const anio = new Date().getFullYear();
+  const totalAnio = DB.gastos.filter(r => r.fecha && r.fecha.startsWith(anio)).reduce((s,r) => s + r.monto, 0);
+  const cats = {};
+  DB.gastos.forEach(r => { cats[r.cat] = (cats[r.cat]||0) + r.monto; });
+  const topCat = Object.entries(cats).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('gastos-metrics').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Total acumulado</div><div class="metric-value">$${fmtNum(Math.round(total))}</div></div>
+    <div class="metric-card orange"><div class="metric-label">Este año ${anio}</div><div class="metric-value">$${fmtNum(Math.round(totalAnio))}</div></div>
+    <div class="metric-card yellow"><div class="metric-label">Mayor gasto en</div><div class="metric-value" style="font-size:1rem;">${topCat ? topCat[0] : '—'}</div><div class="metric-sub">${topCat ? '$'+fmtNum(Math.round(topCat[1])) : ''}</div></div>`;
+}
+function deleteGasto(id) { if(!confirm('¿Eliminar?')) return; DB.gastos = DB.gastos.filter(r => r.id !== id); saveDB(); renderGastos(); }
+
+// ═══════════════════════════════════════
+//  DOCUMENTOS
+// ═══════════════════════════════════════
+function saveDoc() {
+  const id = document.getElementById('doc-edit-id').value || genId();
+  const reg = {
+    id, autoId: v('d-auto'), tipo: v('d-tipo'),
+    nro: v('d-nro'), entidad: v('d-entidad'),
+    emision: v('d-emision'), vto: v('d-vto'),
+    costo: parseFloat(v('d-costo')) || 0, alerta: parseInt(v('d-alerta')) || 30,
+    notas: v('d-notas'), ts: Date.now()
+  };
+  const idx = DB.documentos.findIndex(x => x.id === id);
+  if(idx >= 0) DB.documentos[idx] = reg; else DB.documentos.push(reg);
+  saveDB(); closeModal('modal-doc'); renderDocs(); renderAlerts();
+  document.getElementById('doc-edit-id').value = '';
+}
+function renderDocs() {
+  const cont = document.getElementById('docs-cards');
+  if(!DB.documentos.length) { cont.innerHTML = '<div style="color:var(--text-light);font-size:.9rem;grid-column:1/-1;">Sin documentos cargados.</div>'; return; }
+  const now = new Date(); now.setHours(0,0,0,0);
+  cont.innerHTML = DB.documentos.map(d => {
+    const auto = DB.autos.find(a => a.id === d.autoId);
+    const vto = d.vto ? new Date(d.vto + 'T00:00:00') : null;
+    const diff = vto ? Math.round((vto - now) / 86400000) : null;
+    let statusCls = 'badge-green', statusTxt = 'Vigente';
+    if(diff !== null) {
+      if(diff < 0) { statusCls = 'badge-red'; statusTxt = `Vencido hace ${Math.abs(diff)} días`; }
+      else if(diff <= d.alerta) { statusCls = 'badge-orange'; statusTxt = `Vence en ${diff} días`; }
+    }
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.7rem;">
+        <div>
+          <div style="font-weight:900;font-size:1rem;color:var(--green-dark);">${d.tipo}</div>
+          <div style="font-size:.78rem;color:var(--text-light);">${auto ? auto.nombre + ' · ' + auto.patente : '—'}</div>
+        </div>
+        <span class="badge ${statusCls}">${statusTxt}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem;font-size:.82rem;margin-bottom:.7rem;">
+        ${d.entidad ? `<div><span style="color:var(--text-light);">Entidad:</span> ${d.entidad}</div>` : ''}
+        ${d.nro ? `<div><span style="color:var(--text-light);">Nro:</span> ${d.nro}</div>` : ''}
+        ${d.emision ? `<div><span style="color:var(--text-light);">Emisión:</span> ${d.emision}</div>` : ''}
+        ${d.vto ? `<div><span style="color:var(--text-light);">Vto:</span> <strong>${d.vto}</strong></div>` : ''}
+        ${d.costo ? `<div><span style="color:var(--text-light);">Costo:</span> $${fmtNum(d.costo)}</div>` : ''}
+      </div>
+      ${d.notas ? `<div style="font-size:.78rem;color:var(--text-light);margin-bottom:.5rem;">${d.notas}</div>` : ''}
+      <div style="display:flex;gap:.4rem;">
+        <button class="btn btn-outline btn-sm" onclick="editDoc('${d.id}')">✏ Editar</button>
+        <button class="btn btn-red btn-sm" onclick="deleteDoc('${d.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function editDoc(id) {
+  const d = DB.documentos.find(x => x.id === id);
+  if(!d) return;
+  document.getElementById('doc-edit-id').value = id;
+  populateAutoSelects();
+  setv('d-auto', d.autoId); document.getElementById('d-tipo').value = d.tipo;
+  setv('d-nro', d.nro); setv('d-entidad', d.entidad);
+  setv('d-emision', d.emision); setv('d-vto', d.vto);
+  setv('d-costo', d.costo); setv('d-alerta', d.alerta); setv('d-notas', d.notas);
+  openModal('modal-doc');
+}
+function deleteDoc(id) { if(!confirm('¿Eliminar?')) return; DB.documentos = DB.documentos.filter(d => d.id !== id); saveDB(); renderDocs(); renderAlerts(); }
+
+// ═══════════════════════════════════════
+//  ALERTS
+// ═══════════════════════════════════════
+function renderAlerts() {
+  const bar = document.getElementById('alerts-bar');
+  const alerts = [];
+  const now = new Date(); now.setHours(0,0,0,0);
+  DB.documentos.forEach(d => {
+    if(!d.vto) return;
+    const vto = new Date(d.vto + 'T00:00:00');
+    const diff = Math.round((vto - now) / 86400000);
+    const auto = DB.autos.find(a => a.id === d.autoId);
+    const nombre = auto ? auto.nombre : 'Auto';
+    if(diff < 0) alerts.push({ cls: 'danger', txt: `⛔ ${nombre} — ${d.tipo} VENCIDO hace ${Math.abs(diff)} días (${d.vto})` });
+    else if(diff <= d.alerta) alerts.push({ cls: 'warn', txt: `⚠️ ${nombre} — ${d.tipo} vence en ${diff} días (${d.vto})` });
+  });
+  // mant proxKm alerts
+  DB.mantenimiento.forEach(m => {
+    if(!m.proxKm) return;
+    const auto = DB.autos.find(a => a.id === m.autoId);
+    if(auto && auto.km > 0 && m.proxKm > 0 && auto.km >= m.proxKm - 500) {
+      alerts.push({ cls: auto.km >= m.proxKm ? 'danger' : 'warn', txt: `🔧 ${auto.nombre} — ${m.cat}: próximo service en ${fmtNum(m.proxKm)} km (actual: ${fmtNum(auto.km)})` });
+    }
+  });
+  bar.innerHTML = alerts.map(a => `<div class="alert-item ${a.cls}">${a.txt}</div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  HISTORIAL
+// ═══════════════════════════════════════
+function renderHistorial() {
+  const filterId = document.getElementById('hist-auto-filter').value;
+  const events = [];
+  DB.nafta.forEach(r => events.push({ ts: r.ts, fecha: r.fecha, tipo: '⛽ Carga nafta', desc: `${r.litros.toFixed(2)}L · ${r.tipo} · $${fmtNum(Math.round(r.total))}`, sub: r.costoKm > 0 ? `${r.kmRecorridos} km · ${r.kmPerL.toFixed(2)} km/L · $${r.costoKm.toFixed(2)}/km` : '', autoId: r.autoId, color: 'badge-green' }));
+  DB.mantenimiento.forEach(r => events.push({ ts: r.ts, fecha: r.fecha, tipo: '🔧 ' + r.cat, desc: r.desc, sub: `${r.taller ? r.taller + ' · ' : ''}${r.costo ? '$'+fmtNum(r.costo) : ''}`, autoId: r.autoId, color: 'badge-orange' }));
+  DB.gastos.forEach(r => events.push({ ts: r.ts, fecha: r.fecha, tipo: '💰 ' + r.cat, desc: r.desc, sub: '$' + fmtNum(r.monto), autoId: r.autoId, color: 'badge-yellow' }));
+
+  let filtered = filterId === 'todos' ? events : events.filter(e => e.autoId === filterId);
+  filtered.sort((a,b) => b.ts - a.ts);
+
+  const tl = document.getElementById('historial-tl');
+  if(!filtered.length) { tl.innerHTML = '<div style="color:var(--text-light);font-size:.9rem;">Sin eventos registrados.</div>'; return; }
+  tl.innerHTML = filtered.map(e => {
+    const auto = DB.autos.find(a => a.id === e.autoId);
+    return `<div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-date">${e.fecha} ${auto ? '· ' + auto.nombre : ''}</div>
+        <div class="tl-title"><span class="badge ${e.color}" style="margin-right:.4rem;">${e.tipo}</span></div>
+        <div class="tl-detail">${e.desc}</div>
+        ${e.sub ? `<div class="tl-cost">${e.sub}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+//  INICIO
+// ═══════════════════════════════════════
+let selectedAutoId = null;
+function renderInicioPills() {
+  const cont = document.getElementById('inicio-car-select');
+  if(!DB.autos.length) { cont.innerHTML = ''; return; }
+  if(!selectedAutoId || !DB.autos.find(a => a.id === selectedAutoId)) selectedAutoId = DB.autos[0].id;
+  cont.innerHTML = DB.autos.map(a => `<span class="car-pill ${a.id === selectedAutoId ? 'selected' : ''}" onclick="selectAutoInicio('${a.id}')">${a.nombre}</span>`).join('');
+  updateInicioMetrics();
+}
+function selectAutoInicio(id) { selectedAutoId = id; renderInicioPills(); }
+function updateInicioMetrics() {
+  const auto = DB.autos.find(a => a.id === selectedAutoId);
+  if(!auto) return;
+  document.getElementById('m-km').textContent = fmtNum(auto.km) + ' km';
+  const ultimaNafta = [...DB.nafta].filter(r => r.autoId === selectedAutoId).sort((a,b) => b.ts - a.ts)[0];
+  document.getElementById('m-cpkm').textContent = ultimaNafta && ultimaNafta.costoKm > 0 ? '$' + ultimaNafta.costoKm.toFixed(2) : '—';
+  document.getElementById('m-rend').textContent = ultimaNafta && ultimaNafta.kmPerL > 0 ? ultimaNafta.kmPerL.toFixed(2) : '—';
+  const gTotal = DB.gastos.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.monto,0)
+    + DB.nafta.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.total,0)
+    + DB.mantenimiento.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.costo,0);
+  document.getElementById('m-gtotal').textContent = '$' + fmtNum(Math.round(gTotal));
+
+  // vencimientos
+  const now = new Date(); now.setHours(0,0,0,0);
+  const docs = DB.documentos.filter(d => d.autoId === selectedAutoId && d.vto).map(d => {
+    const vto = new Date(d.vto + 'T00:00:00');
+    const diff = Math.round((vto - now) / 86400000);
+    return { tipo: d.tipo, vto: d.vto, diff };
+  }).sort((a,b) => a.diff - b.diff);
+  const vencDiv = document.getElementById('inicio-venc');
+  vencDiv.innerHTML = docs.length ? docs.slice(0,5).map(d => {
+    const cls = d.diff < 0 ? 'badge-red' : d.diff <= 30 ? 'badge-orange' : 'badge-green';
+    const txt = d.diff < 0 ? `Vencido` : d.diff === 0 ? 'Hoy' : `${d.diff} días`;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--green-pale);font-size:.84rem;"><span>${d.tipo}</span><span class="badge ${cls}">${txt} · ${d.vto}</span></div>`;
+  }).join('') : '<div style="font-size:.85rem;color:var(--text-light);">Sin documentos cargados.</div>';
+
+  // mantenimientos
+  const mants = [...DB.mantenimiento].filter(r => r.autoId === selectedAutoId).sort((a,b) => b.ts - a.ts).slice(0,4);
+  const mantDiv = document.getElementById('inicio-mantenimientos');
+  mantDiv.innerHTML = mants.length ? mants.map(m => `<div style="display:flex;align-items:center;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--green-pale);font-size:.84rem;"><span>${m.fecha} — ${m.cat}</span><span style="font-weight:800;color:var(--orange);">${m.costo ? '$'+fmtNum(m.costo) : '—'}</span></div>`).join('') : '<div style="font-size:.85rem;color:var(--text-light);">Sin mantenimientos registrados.</div>';
+}
+function renderInicio() { renderInicioPills(); renderAlerts(); }
+
+// ═══════════════════════════════════════
+//  LINKS
+// ═══════════════════════════════════════
+const PREDEF_LINKS = [
+  { titulo: 'Autocosmos', url: 'https://www.autocosmos.com.ar', cat: 'Mecánica general', ico: '🚗' },
+  { titulo: 'OBD diagnóstico', url: 'https://www.obdauto.com.ar', cat: 'Mecánica general', ico: '🔌' },
+  { titulo: 'Precios Claros — combustibles', url: 'https://www.preciosclaros.gob.ar', cat: 'Combustible / Precios', ico: '⛽' },
+  { titulo: 'Patentes ARBA', url: 'https://www.arba.gov.ar', cat: 'Trámites / Estado', ico: '📄' },
+  { titulo: 'DNRPA — RNAT', url: 'https://www.dnrpa.gov.ar', cat: 'Trámites / Estado', ico: '📋' },
+  { titulo: 'YouTube — mecánica en español', url: 'https://www.youtube.com/results?search_query=mecanica+automotriz', cat: 'Tutoriales / Videos', ico: '▶️' },
+];
+function saveLink() {
+  const id = document.getElementById('link-edit-id').value || genId();
+  const reg = { id, titulo: v('l-titulo'), url: v('l-url'), cat: v('l-cat'), ico: v('l-ico') || '🔗', ts: Date.now() };
+  if(!reg.titulo || !reg.url) { alert('Completá título y URL'); return; }
+  const idx = DB.links.findIndex(x => x.id === id);
+  if(idx >= 0) DB.links[idx] = reg; else DB.links.push(reg);
+  saveDB(); closeModal('modal-link'); renderLinks();
+  document.getElementById('link-edit-id').value = '';
+}
+function renderLinks() {
+  const pre = document.getElementById('links-predef');
+  pre.innerHTML = PREDEF_LINKS.map(l => `
+    <div class="link-card">
+      <div class="link-icon">${l.ico}</div>
+      <div><div class="link-cat">${l.cat}</div><a href="${l.url}" target="_blank" rel="noopener">${l.titulo}</a></div>
+    </div>`).join('');
+
+  const cust = document.getElementById('links-custom');
+  const empty = document.getElementById('links-empty');
+  if(!DB.links.length) { cust.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  cust.innerHTML = DB.links.map(l => `
+    <div class="link-card">
+      <div class="link-icon">${l.ico}</div>
+      <div style="flex:1;"><div class="link-cat">${l.cat}</div><a href="${l.url}" target="_blank" rel="noopener">${l.titulo}</a></div>
+      <button class="btn btn-red btn-sm" onclick="deleteLink('${l.id}')">🗑</button>
+    </div>`).join('');
+}
+function deleteLink(id) { if(!confirm('¿Eliminar link?')) return; DB.links = DB.links.filter(l => l.id !== id); saveDB(); renderLinks(); }
+
+// ═══════════════════════════════════════
+//  EXPORT / IMPORT / PDF
+// ═══════════════════════════════════════
+function exportData() {
+  const json = JSON.stringify(DB, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `autito_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+function importData(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if(!imported.autos) { alert('Archivo inválido'); return; }
+      if(confirm('¿Reemplazar todos los datos actuales con el backup importado?')) {
+        DB = imported; saveDB();
+        renderAutos(); renderAlerts(); renderInicio();
+        alert('✅ Datos importados correctamente');
+      }
+    } catch { alert('Error al leer el archivo'); }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+function printPDF() {
+  if(typeof window.jspdf === 'undefined') { window.print(); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const now = new Date().toLocaleString('es-AR');
+  doc.setFontSize(18); doc.setTextColor(26,92,42);
+  doc.text('AUTITO — Reporte completo', 15, 20);
+  doc.setFontSize(10); doc.setTextColor(100);
+  doc.text(`Generado: ${now}`, 15, 28);
+  let y = 38;
+  const line = (txt, indent=15, bold=false) => {
+    if(bold) doc.setFont(undefined,'bold'); else doc.setFont(undefined,'normal');
+    doc.setFontSize(10); doc.setTextColor(30);
+    doc.text(String(txt), indent, y); y += 6;
+    if(y > 270) { doc.addPage(); y = 15; }
+  };
+  line('AUTOS', 15, true); doc.setFontSize(9);
+  DB.autos.forEach(a => line(`${a.nombre} | ${a.patente} | ${a.marca} ${a.modelo} ${a.anio} | ${fmtNum(a.km)} km`, 18));
+  y += 3;
+  line('ÚLTIMAS CARGAS DE NAFTA', 15, true);
+  [...DB.nafta].sort((a,b)=>b.ts-a.ts).slice(0,10).forEach(r => {
+    const auto = DB.autos.find(a=>a.id===r.autoId);
+    line(`${r.fecha} | ${auto?auto.nombre:'—'} | ${r.litros.toFixed(2)}L ${r.tipo} | $${fmtNum(Math.round(r.total))} | ${r.kmPerL>0?r.kmPerL.toFixed(2)+' km/L':'—'}`, 18);
+  });
+  y += 3;
+  line('MANTENIMIENTO', 15, true);
+  [...DB.mantenimiento].sort((a,b)=>b.ts-a.ts).slice(0,15).forEach(r => {
+    const auto = DB.autos.find(a=>a.id===r.autoId);
+    line(`${r.fecha} | ${auto?auto.nombre:'—'} | ${r.cat} | ${r.desc} | $${fmtNum(r.costo)}`, 18);
+  });
+  y += 3;
+  line('GASTOS & IMPUESTOS', 15, true);
+  [...DB.gastos].sort((a,b)=>b.ts-a.ts).slice(0,15).forEach(r => {
+    const auto = DB.autos.find(a=>a.id===r.autoId);
+    line(`${r.fecha} | ${auto?auto.nombre:'—'} | ${r.cat} | ${r.desc} | $${fmtNum(r.monto)}`, 18);
+  });
+  y += 3;
+  line('DOCUMENTOS', 15, true);
+  DB.documentos.forEach(d => {
+    const auto = DB.autos.find(a=>a.id===d.autoId);
+    line(`${d.tipo} | ${auto?auto.nombre:'—'} | Vto: ${d.vto||'—'} | ${d.entidad||''}`, 18);
+  });
+  doc.save(`autito_reporte_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function setv(id, val) { const el = document.getElementById(id); if(el) el.value = val || ''; }
+function clearForm(ids) { ids.forEach(id => setv(id,'')); }
+function fmtNum(n) { return Number(n).toLocaleString('es-AR'); }
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+loadDB();
+renderAutos();
+renderAlerts();
+renderInicio();
+renderNaftaTabla();
+renderMantTabla();
+renderLinks();
+populateAutoSelects();
+// Set today date in nafta form
+document.getElementById('n-fecha').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
