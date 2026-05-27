@@ -316,10 +316,10 @@ tbody td { padding: .6rem .9rem; vertical-align: middle; }
   <div id="inicio-car-select" style="margin-bottom:1rem;"></div>
 
   <div class="grid-4" id="inicio-metrics">
-    <div class="metric-card"><div class="metric-label">Km Totales</div><div class="metric-value" id="m-km">—</div><div class="metric-sub">Odómetro actual</div></div>
+    <div class="metric-card"><div class="metric-label">Km Totales</div><div class="metric-value" id="ini-km">—</div><div class="metric-sub">Odómetro actual</div></div>
     <div class="metric-card orange"><div class="metric-label">Costo por Km</div><div class="metric-value" id="m-cpkm">—</div><div class="metric-sub">Último tanque</div></div>
     <div class="metric-card yellow"><div class="metric-label">Rendimiento</div><div class="metric-value" id="m-rend">—</div><div class="metric-sub">km/litro</div></div>
-    <div class="metric-card"><div class="metric-label">Gasto Total</div><div class="metric-value" id="m-gtotal">—</div><div class="metric-sub">Acumulado</div></div>
+    <div class="metric-card orange"><div class="metric-label">Gasto Total</div><div class="metric-value" id="ini-gtotal">—</div><div class="metric-sub">Acumulado</div></div>
   </div>
 
   <div class="grid-2" style="margin-top:1rem;">
@@ -607,11 +607,43 @@ let DB = {
 };
 
 function loadDB() {
-  const saved = localStorage.getItem('autito_db');
-  if (saved) DB = JSON.parse(saved);
+  try {
+    const saved = localStorage.getItem('autito_db');
+    if (saved) DB = JSON.parse(saved);
+  } catch(e) {
+    console.warn('No se pudo leer localStorage:', e);
+    showToast('⚠️ El navegador bloqueó el almacenamiento local. Los datos no persisten entre sesiones. Usá un servidor local o abrí el archivo desde http://.', 'warn', 6000);
+  }
 }
 function saveDB() {
-  localStorage.setItem('autito_db', JSON.stringify(DB));
+  try {
+    localStorage.setItem('autito_db', JSON.stringify(DB));
+  } catch(e) {
+    console.error('Error al guardar en localStorage:', e);
+    showToast('⚠️ No se pudo guardar: el navegador bloqueó el almacenamiento local. Intentá abrir el archivo desde un servidor local (python -m http.server) o desactivá Brave Shields para este archivo.', 'warn', 7000);
+  }
+}
+function showToast(msg, type = 'ok', duration = 3500) {
+  let toast = document.getElementById('autito-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'autito-toast';
+    toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;max-width:480px;width:90%;padding:.85rem 1.2rem;border-radius:12px;font-size:.87rem;font-weight:700;font-family:inherit;box-shadow:0 4px 24px rgba(0,0,0,0.22);display:none;text-align:center;line-height:1.4;';
+    document.body.appendChild(toast);
+  }
+  const colors = {
+    ok:   { bg: '#d4f5dc', color: '#1a5c2a', border: '#2d8c47' },
+    warn: { bg: '#fff3e0', color: '#b45000', border: '#f57c00' },
+    err:  { bg: '#ffebee', color: '#c62828', border: '#c62828' },
+  };
+  const c = colors[type] || colors.ok;
+  toast.style.background = c.bg;
+  toast.style.color = c.color;
+  toast.style.border = `1.5px solid ${c.border}`;
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.display = 'none'; }, duration);
 }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
@@ -696,9 +728,11 @@ function saveAuto() {
   };
   const idx = DB.autos.findIndex(a => a.id === id);
   if(idx >= 0) DB.autos[idx] = auto; else DB.autos.push(auto);
+  if (!auto.nombre) { showToast('⚠️ El nombre del auto es obligatorio.', 'warn'); return; }
   saveDB(); closeModal('modal-auto'); renderAutos(); renderAlerts();
   clearForm(['a-nombre','a-patente','a-marca','a-modelo','a-anio','a-color','a-km','a-tanque','a-motor','a-vin','a-notas']);
   document.getElementById('auto-edit-id').value = '';
+  showToast('✅ Auto guardado correctamente.');
 }
 function renderAutos() {
   const cont = document.getElementById('autos-list');
@@ -831,9 +865,19 @@ function deleteNafta(id) { if(!confirm('¿Eliminar este registro?')) return; DB.
 //  MANTENIMIENTO
 // ═══════════════════════════════════════
 function saveMant() {
+  const autoId = v('m-auto');
+  const fecha  = v('m-fecha');
+  if (!autoId) {
+    showToast('⚠️ Primero tenés que cargar un auto en la sección "Mis Autos".', 'warn');
+    return;
+  }
+  if (!fecha) {
+    showToast('⚠️ La fecha es obligatoria.', 'warn');
+    return;
+  }
   const id = document.getElementById('mant-edit-id').value || genId();
   const reg = {
-    id, autoId: v('m-auto'), fecha: v('m-fecha'),
+    id, autoId, fecha,
     cat: v('m-cat'), desc: v('m-desc'), km: parseFloat(v('m-km')) || 0,
     proxKm: parseFloat(v('m-prox-km')) || 0, proxFecha: v('m-prox-fecha'),
     taller: v('m-taller'), costo: parseFloat(v('m-costo')) || 0,
@@ -843,7 +887,9 @@ function saveMant() {
   const idx = DB.mantenimiento.findIndex(x => x.id === id);
   if(idx >= 0) DB.mantenimiento[idx] = reg; else DB.mantenimiento.push(reg);
   saveDB(); closeModal('modal-mant'); renderMantTabla(); renderAlerts();
+  clearForm(['m-fecha','m-desc','m-km','m-prox-km','m-prox-fecha','m-taller','m-costo','m-repuesto','m-garantia','m-notas']);
   document.getElementById('mant-edit-id').value = '';
+  showToast('✅ Registro guardado correctamente.');
 }
 function renderMantTabla(filter = null) {
   const tbody = document.getElementById('mant-tbody');
@@ -892,16 +938,22 @@ function deleteMant(id) { if(!confirm('¿Eliminar este registro?')) return; DB.m
 //  GASTOS
 // ═══════════════════════════════════════
 function saveGasto() {
+  const autoId = v('g-auto');
+  const fecha  = v('g-fecha');
+  if (!autoId) { showToast('⚠️ Primero tenés que cargar un auto en la sección "Mis Autos".', 'warn'); return; }
+  if (!fecha)  { showToast('⚠️ La fecha es obligatoria.', 'warn'); return; }
   const id = document.getElementById('gasto-edit-id').value || genId();
   const reg = {
-    id, autoId: v('g-auto'), fecha: v('g-fecha'),
+    id, autoId, fecha,
     cat: v('g-cat'), desc: v('g-desc'), monto: parseFloat(v('g-monto')) || 0,
     vto: v('g-vto'), notas: v('g-notas'), ts: Date.now()
   };
   const idx = DB.gastos.findIndex(x => x.id === id);
   if(idx >= 0) DB.gastos[idx] = reg; else DB.gastos.push(reg);
   saveDB(); closeModal('modal-gasto'); renderGastos(); renderAlerts();
+  clearForm(['g-fecha','g-desc','g-monto','g-vto','g-notas']);
   document.getElementById('gasto-edit-id').value = '';
+  showToast('✅ Gasto guardado correctamente.');
 }
 function renderGastos() {
   const tbody = document.getElementById('gastos-tbody');
@@ -1072,14 +1124,14 @@ function selectAutoInicio(id) { selectedAutoId = id; renderInicioPills(); }
 function updateInicioMetrics() {
   const auto = DB.autos.find(a => a.id === selectedAutoId);
   if(!auto) return;
-  document.getElementById('m-km').textContent = fmtNum(auto.km) + ' km';
+  document.getElementById('ini-km').textContent = fmtNum(auto.km) + ' km';
   const ultimaNafta = [...DB.nafta].filter(r => r.autoId === selectedAutoId).sort((a,b) => b.ts - a.ts)[0];
   document.getElementById('m-cpkm').textContent = ultimaNafta && ultimaNafta.costoKm > 0 ? '$' + ultimaNafta.costoKm.toFixed(2) : '—';
   document.getElementById('m-rend').textContent = ultimaNafta && ultimaNafta.kmPerL > 0 ? ultimaNafta.kmPerL.toFixed(2) : '—';
   const gTotal = DB.gastos.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.monto,0)
     + DB.nafta.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.total,0)
     + DB.mantenimiento.filter(r => r.autoId === selectedAutoId).reduce((s,r) => s+r.costo,0);
-  document.getElementById('m-gtotal').textContent = '$' + fmtNum(Math.round(gTotal));
+  document.getElementById('ini-gtotal').textContent = '$' + fmtNum(Math.round(gTotal));
 
   // vencimientos
   const now = new Date(); now.setHours(0,0,0,0);
@@ -1217,9 +1269,10 @@ function printPDF() {
   doc.save(`autito_reporte_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-// ═══════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════
+// updateMantSubcat — reservada para lógica futura por categoría
+function updateMantSubcat() { /* sin acción por ahora */ }
+
+
 function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function setv(id, val) { const el = document.getElementById(id); if(el) el.value = val || ''; }
 function clearForm(ids) { ids.forEach(id => setv(id,'')); }
